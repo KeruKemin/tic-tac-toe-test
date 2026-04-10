@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tic Tac Toe vs AI</title>
+  <style>
+    body { font-family: Arial; text-align: center; }
+    h1 { margin-top: 20px; }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 5px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      font-size: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid black;
+      cursor: pointer;
+    }
+    #score {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Tic Tac Toe (You vs AI)</h1>
+<div id="score">You: 0 | AI: 0 | Draw: 0</div>
+<div id="board"></div>
+
+<script>
+  const boardEl = document.getElementById("board");
+  const scoreEl = document.getElementById("score");
+
+  let board = Array(9).fill("");
+  let gameOver = false;
+
+  let scores = {
+    you: 0,
+    ai: 0,
+    draw: 0
+  };
+
+  function renderBoard() {
+    boardEl.innerHTML = "";
+    board.forEach((cell, i) => {
+      const div = document.createElement("div");
+      div.classList.add("cell");
+      div.textContent = cell;
+      div.onclick = () => playerMove(i);
+      boardEl.appendChild(div);
+    });
+  }
+
+  function playerMove(index) {
+    if (board[index] || gameOver) return;
+    board[index] = "X";
+    renderBoard();
+
+    if (checkWinner("X")) return endGame("you");
+    if (board.every(c => c)) return endGame("draw");
+
+    setTimeout(aiMove, 300);
+  }
+
+  function aiMove() {
+    // 1. Try to win
+    let move = findBestMove("O");
+    if (move !== null) return placeMove(move);
+
+    // 2. Block player from winning
+    move = findBestMove("X");
+    if (move !== null) return placeMove(move);
+
+    // 3. Take center if available
+    if (board[4] === "") return placeMove(4);
+
+    // 4. Take a corner if available
+    const corners = [0, 2, 6, 8].filter(i => board[i] === "");
+    if (corners.length) {
+      move = corners[Math.floor(Math.random() * corners.length)];
+      return placeMove(move);
+    }
+
+    // 5. Otherwise random move
+    let empty = board.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+    move = empty[Math.floor(Math.random() * empty.length)];
+    placeMove(move);
+  }
+
+  function placeMove(index) {
+    board[index] = "O";
+    renderBoard();
+
+    if (checkWinner("O")) return endGame("ai");
+    if (board.every(c => c)) return endGame("draw");
+  }
+
+  function findBestMove(player) {
+    const wins = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    for (let combo of wins) {
+      let values = combo.map(i => board[i]);
+      if (values.filter(v => v === player).length === 2 && values.includes("")) {
+        return combo[values.indexOf("")];
+      }
+    }
+
+    return null;
+  }
+
+  function checkWinner(player) {
+    const wins = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+    return wins.some(combo => combo.every(i => board[i] === player));
+  }
+
+  function endGame(result) {
+    gameOver = true;
+
+    if (result === "you") scores.you++;
+    else if (result === "ai") scores.ai++;
+    else scores.draw++;
+
+    updateScore();
+
+    setTimeout(resetGame, 1200);
+  }
+
+  function updateScore() {
+    scoreEl.textContent = `You: ${scores.you} | AI: ${scores.ai} | Draw: ${scores.draw}`;
+  }
+
+  function resetGame() {
+    board = Array(9).fill("");
+    gameOver = false;
+    renderBoard();
+  }
+
+  renderBoard();
+</script>
+
+</body>
+</html>
